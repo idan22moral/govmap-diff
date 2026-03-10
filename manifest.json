@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "OLMapContext Diff Tile Patch",
+  "version": "0.1.0",
+  "description": "Patches govmap to render a diff between two satellite image sources.",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GovMap Diff Renderer"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.govmap.gov.il/*"],
+      "js": ["patch.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.govmap.gov.il/*"],
+      "js": ["injectSettings.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
