@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OLMapContext Diff</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 12px; width: 260px; }
+    label { display: block; margin-top: 10px; font-size: 12px; }
+    input[type=text] { width: 100%; box-sizing: border-box; padding: 6px; margin-top: 4px; }
+    button { margin-top: 12px; width: 100%; padding: 8px; font-size: 13px; }
+    .row { display: flex; align-items: center; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <strong>Diff patch</strong>
+    <button id="toggle">...</button>
+  </div>
+
+  <label>
+    Current string
+    <input id="current" type="text" placeholder="e.g. orto2025me" />
+  </label>
+  <label>
+    Compare to
+    <input id="compare" type="text" placeholder="e.g. orto2023me" />
+  </label>
+
+  <button id="save">Save</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
