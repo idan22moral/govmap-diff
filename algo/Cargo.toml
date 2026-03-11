@@ -1,0 +1,13 @@
+[package]
+name = "govmap-diff"
+version = "0.1.0"
+authors = ["Idan Moral idan22moral@gmail.com"]
+description = "govmap diff"
+repository = "https://github.com/idan22moral/govmap-diff"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"

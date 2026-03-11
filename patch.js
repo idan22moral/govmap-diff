@@ -1,6 +1,22 @@
 // Patch for drawImage to show a diff between two tile sources.
 // Uses stored settings (enabled/current/compare/threshold/heatmapMax) from chrome.storage.sync.
 
+let wasmUrl;
+
+window.addEventListener("message", async (e) => {
+  if (e.source !== window) return;
+  if (e.data?.type !== "EXT_WASM_URL") return;
+
+  wasmUrl = e.data.url;
+  console.log('wasmUrl', wasmUrl)
+  
+
+//   const { instance } = await WebAssembly.instantiateStreaming(fetch(wasmUrl));
+  window.diffAlgo = await import(wasmUrl);
+  await window.diffAlgo.default();
+
+  console.log("WASM loaded", window.diffAlgo);
+});
 
 const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
 
@@ -11,6 +27,10 @@ const defaultSettings = {
     threshold: 20,
     heatmapMax: 80
 };
+
+async function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
+    window.diffAlgo.calc_image(image1, image2, out, diffThreshold, heatmapMax);
+}
 
 let settings = { ...defaultSettings };
 
@@ -97,39 +117,3 @@ CanvasRenderingContext2D.prototype.drawImage = function (originalImage, sx, sy, 
     img2.src = src2;
 };
 
-// the algorithm
-function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
-    for (let p = 0; p < image1.length; p += 4) {
-
-        const r1 = image1[p];
-        const g1 = image1[p + 1];
-        const b1 = image1[p + 2];
-
-        const r2 = image2[p];
-        const g2 = image2[p + 1];
-        const b2 = image2[p + 2];
-
-        // luminance
-        const y1 = 0.299 * r1 + 0.587 * g1 + 0.114 * b1;
-        const y2 = 0.299 * r2 + 0.587 * g2 + 0.114 * b2;
-
-        const diff = Math.abs(y1 - y2);
-
-        if (diff < diffThreshold) {
-            // unchanged → grayscale background
-            out[p] = y1;
-            out[p + 1] = y1;
-            out[p + 2] = y1;
-            out[p + 3] = 255;
-        } else {
-
-            // heatmap: yellow → red
-            const t = Math.min(diff / heatmapMax, 1);
-
-            out[p] = 255;
-            out[p + 1] = 255 * (1 - t);
-            out[p + 2] = 0;
-            out[p + 3] = 255;
-        }
-    }
-}

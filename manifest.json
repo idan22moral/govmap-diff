@@ -11,6 +11,16 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "algo/pkg/*"
+      ],
+      "matches": [
+        "https://www.govmap.gov.il/*"
+      ]
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "GovMap Diff Renderer"
@@ -24,7 +34,7 @@
     },
     {
       "matches": ["https://www.govmap.gov.il/*"],
-      "js": ["injectSettings.js"],
+      "js": ["injectSettings.js", "injectWasm.js"],
       "run_at": "document_start"
     }
   ]
