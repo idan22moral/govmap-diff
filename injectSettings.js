@@ -26,21 +26,8 @@ function applySettings(stored) {
   }
 }
 
-function ensurePatchInjected() {
-  if (document.getElementById('govmap-diff-mypatch')) {
-    return;
-  }
-
-  const script = document.createElement('script');
-  script.id = 'govmap-diff-mypatch';
-  script.src = chrome.runtime.getURL('mypatch.js');
-  script.defer = true;
-  document.documentElement.appendChild(script);
-}
-
 chrome.storage.sync.get('olDiffSettings', (items) => {
   applySettings(items.olDiffSettings);
-  ensurePatchInjected();
 });
 
 chrome.storage.onChanged.addListener((changes) => {
@@ -52,7 +39,6 @@ chrome.storage.onChanged.addListener((changes) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.type === 'olDiffSettings' && message.settings) {
     applySettings(message.settings);
-    ensurePatchInjected();
     sendResponse({ ok: true });
   }
 });
