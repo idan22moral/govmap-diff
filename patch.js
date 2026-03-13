@@ -1,21 +1,45 @@
 // Patch for drawImage to show a diff between two tile sources.
 // Uses stored settings (enabled/current/compare/threshold/heatmapMax) from chrome.storage.sync.
+class LRUCache {
+    constructor(size) {
+        this.size = size;
+        this.map = new Map();
+        this.queue = [];
+    }
+
+    get(key) {
+        return this.map.get(key);
+    }
+
+    set(key, value) {
+        this._makeRoom();
+        this.map.set(key, value);
+        this.queue.push(key);
+    }
+
+    _makeRoom() {
+        if (this.queue.length === this.size) {
+            const keyToDelete = this.queue.shift();
+            this.map.delete(keyToDelete);
+        }
+    }
+}
 
 let wasmUrl;
 
 window.addEventListener("message", async (e) => {
-  if (e.source !== window) return;
-  if (e.data?.type !== "EXT_WASM_URL") return;
+    if (e.source !== window) return;
+    if (e.data?.type !== "EXT_WASM_URL") return;
 
-  wasmUrl = e.data.url;
-  console.log('wasmUrl', wasmUrl)
-  
+    wasmUrl = e.data.url;
+    console.log('wasmUrl', wasmUrl)
 
-//   const { instance } = await WebAssembly.instantiateStreaming(fetch(wasmUrl));
-  window.diffAlgo = await import(wasmUrl);
-  await window.diffAlgo.default();
 
-  console.log("WASM loaded", window.diffAlgo);
+    //   const { instance } = await WebAssembly.instantiateStreaming(fetch(wasmUrl));
+    window.diffAlgo = await import(wasmUrl);
+    await window.diffAlgo.default();
+
+    console.log("WASM loaded", window.diffAlgo);
 });
 
 const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
@@ -51,69 +75,81 @@ window.addEventListener('olDiffSettings', (event) => {
 
 window.originalDrawImageImpl = CanvasRenderingContext2D.prototype.drawImage;
 window.diffCanvas = document.createElement("canvas");
-window.diffCtx = this.diffCanvas.getContext("2d", { willReadFrequently: true });
+window.diffCtx = window.diffCanvas.getContext("2d", { willReadFrequently: true });
 window.diffCtx.drawImage = window.originalDrawImageImpl.bind(window.diffCtx);
 
-CanvasRenderingContext2D.prototype.drawImage = function (originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-    if (!settings.enabled) {
-        return originalDrawImage.call(this, originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-    }
+const imageDataCache = new LRUCache(600);
 
-    if (!originalImage || !originalImage.src) {
+CanvasRenderingContext2D.prototype.drawImage = function (originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
+    const currentImageSrc = originalImage.src;
+    if (!settings.enabled || !originalImage || !currentImageSrc) {
         return originalDrawImage.call(this, originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
     }
 
     const boundDrawImage = window.originalDrawImageImpl.bind(this);
 
-    const src2 = originalImage.src.replace('2023me', '2025me');
+    const compareImageSrc = currentImageSrc.replace(settings.current, settings.compare);
 
-    if (originalImage.src === src2) {
+    if (currentImageSrc === compareImageSrc) {
         boundDrawImage(originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        return;
     }
 
-    const img2 = new Image();
-    img2.crossOrigin = "anonymous";
+    const imageWidth = originalImage.width;
+    const imageHeight = originalImage.height;
+    const ctx = window.diffCtx;
+    const canvas = window.diffCanvas;
 
-    img2.onload = () => {
-        const w = originalImage.width;
-        const h = originalImage.height;
+    const cachedImageData = imageDataCache.get(compareImageSrc);
 
-        const buf = window.diffCanvas;
-        const ctx = window.diffCtx;
+    if (cachedImageData) {
+        ctx.putImageData(cachedImageData, 0, 0);
+        boundDrawImage(
+            canvas,
+            sx, sx,
+            imageWidth - 2 * sx,
+            imageHeight - 2 * sx,
+            dx, dy,
+            dWidth, dHeight
+        );
+        return;
+    }
 
+    const compareImage = new Image();
+    compareImage.crossOrigin = "anonymous";
 
-        if (buf.width !== w || buf.height !== h) {
-            buf.width = w;
-            buf.height = h;
+    compareImage.onload = () => {
+        if (canvas.width !== imageWidth || canvas.height !== imageHeight) {
+            canvas.width = imageWidth;
+            canvas.height = imageHeight;
         }
 
         // draw first image
-        ctx.clearRect(0, 0, w, h);
+        ctx.clearRect(0, 0, imageWidth, imageHeight);
         ctx.drawImage(originalImage, 0, 0);
-        const d1 = ctx.getImageData(0, 0, w, h);
+        const d1 = ctx.getImageData(0, 0, imageWidth, imageHeight);
 
         // draw second image
-        ctx.clearRect(0, 0, w, h);
-        ctx.drawImage(img2, 0, 0);
-        const d2 = ctx.getImageData(0, 0, w, h);
+        ctx.clearRect(0, 0, imageWidth, imageHeight);
+        ctx.drawImage(compareImage, 0, 0);
+        const d2 = ctx.getImageData(0, 0, imageWidth, imageHeight);
 
-        const out = ctx.createImageData(w, h);
-
+        const out = ctx.createImageData(imageWidth, imageHeight);
 
         calcImage(d1.data, d2.data, out.data, settings.threshold, settings.heatmapMax);
 
         ctx.putImageData(out, 0, 0);
+        imageDataCache.set(compareImageSrc, out);
 
         boundDrawImage(
-            buf,
+            canvas,
             sx, sx,
-            w - 2 * sx,
-            h - 2 * sx,
+            imageWidth - 2 * sx,
+            imageHeight - 2 * sx,
             dx, dy,
             dWidth, dHeight
         );
     };
 
-    img2.src = src2;
+    compareImage.src = compareImageSrc;
 };
-
