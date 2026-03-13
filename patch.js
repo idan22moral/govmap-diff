@@ -1,5 +1,3 @@
-// Patch for drawImage to show a diff between two tile sources.
-// Uses stored settings (enabled/current/compare/threshold/heatmapMax) from chrome.storage.sync.
 class LRUCache {
     constructor(size) {
         this.size = size;
