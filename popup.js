@@ -3,7 +3,8 @@ const STORAGE_KEY = 'olDiffSettings';
 const defaults = {
   enabled: true,
   current: 'orto2025me',
-  compare: 'orto2023me'
+  compare: 'orto2023me',
+  threshold: 20
 };
 
 const $ = (id) => document.getElementById(id);
@@ -32,6 +33,7 @@ const updateUi = (settings) => {
   toggle.textContent = settings.enabled ? 'ON' : 'OFF';
   $('current').value = settings.current;
   $('compare').value = settings.compare;
+  $('threshold').value = settings.threshold;
 };
 
 const refreshActiveTab = () => {
@@ -56,6 +58,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('save').addEventListener('click', async () => {
     settings.current = $('current').value.trim() || defaults.current;
     settings.compare = $('compare').value.trim() || defaults.compare;
+    settings.threshold = $('threshold').value || defaults.threshold;
     await saveSettings(settings);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     updateUi(settings);
