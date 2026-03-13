@@ -44,7 +44,6 @@ const defaultSettings = {
 function calcDiffImageData(image1, image2, out, diffThreshold, heatmapMax) {
     const invHeat = 1 / heatmapMax;
     for (let p = 0; p < image1.length; p += 4) {
-
         const r1 = image1[p];
         const g1 = image1[p + 1];
         const b1 = image1[p + 2];
@@ -54,8 +53,8 @@ function calcDiffImageData(image1, image2, out, diffThreshold, heatmapMax) {
         const b2 = image2[p + 2];
 
         // luminance
-        const y1 = luminance(r1,g1,b1);
-        const y2 = luminance(r2,g2,b2);
+        const y1 = luminance(r1, g1, b1);
+        const y2 = luminance(r2, g2, b2);
 
         const diff = Math.abs(y1 - y2);
 
