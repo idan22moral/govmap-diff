@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "OLMapContext Diff Tile Patch",
+  "name": "GovMap Diff Viewer",
   "version": "0.1.0",
   "description": "Patches govmap to render a diff between two satellite image sources.",
   "permissions": [
