@@ -11,20 +11,29 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/content/*"
+      ],
+      "matches": [
+        "https://www.govmap.gov.il/*"
+      ]
+    }
+  ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_title": "GovMap Diff Viewer"
   },
   "content_scripts": [
     {
       "matches": ["https://www.govmap.gov.il/*"],
-      "js": ["patch.js"],
-      "run_at": "document_start",
-      "world": "MAIN"
+      "js": ["src/bootstrap.js"],
+      "run_at": "document_start"
     },
     {
       "matches": ["https://www.govmap.gov.il/*"],
-      "js": ["injectSettings.js"],
+      "js": ["src/injectSettings.js"],
       "run_at": "document_start"
     }
   ]
