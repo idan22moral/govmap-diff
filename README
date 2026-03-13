@@ -1,0 +1,28 @@
+GovMap Diff Viewer
+==================
+
+A Chrome extension that patches the govmap map website (govmap.gov.il) to render visual differences between two satellite image sources.
+
+Features
+--------
+
+- Compare different satellite image layers
+- Adjustable difference threshold
+- Real-time visual diff with heatmap colors (yellow to red for changes, grayscale for unchanged areas)
+
+Usage
+-----
+
+1. Navigate to https://www.govmap.gov.il/
+2. Click the extension icon in the toolbar
+3. Configure the image sources you want to compare:
+   - Current: the base image layer (e.g., orto2025me)
+   - Compare to: the image layer to compare against (e.g., orto2023me)
+4. Adjust the threshold slider to control sensitivity
+5. Click "Save" to apply changes
+6. The map will reload and show differences as colored overlays
+
+License
+-------
+
+See LICENSE file for details.
