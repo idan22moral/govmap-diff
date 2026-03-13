@@ -36,6 +36,7 @@ const defaultSettings = {
 };
 
 function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
+    const invHeat = 1 / heatmapMax;
     for (let p = 0; p < image1.length; p += 4) {
 
         const r1 = image1[p];
@@ -47,8 +48,8 @@ function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
         const b2 = image2[p + 2];
 
         // luminance
-        const y1 = luminance(r1, g1, b1);
-        const y2 = luminance(r2, g2, b2);
+        const y1 = luminance(r1,g1,b1);
+        const y2 = luminance(r2,g2,b2);
 
         const diff = Math.abs(y1 - y2);
 
@@ -61,7 +62,8 @@ function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
         } else {
 
             // heatmap: yellow → red
-            const t = Math.min(diff / heatmapMax, 1);
+            let t = diff * invHeat;
+            if (t > 1) t = 1;
 
             out[p] = 255;
             out[p + 1] = 255 * (1 - t);
@@ -71,7 +73,7 @@ function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
     }
 }
 
-const luminance = (r,g,b) => (77*r + 150*g + 29*b) >> 8;
+const luminance = (r, g, b) => (77 * r + 150 * g + 29 * b) >> 8;
 
 
 let settings = { ...defaultSettings };
