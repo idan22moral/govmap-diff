@@ -9,7 +9,7 @@
     "activeTab"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://www.govmap.gov.il/*"
   ],
   "web_accessible_resources": [
     {
