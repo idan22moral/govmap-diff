@@ -52,9 +52,44 @@ const defaultSettings = {
     heatmapMax: 80
 };
 
-async function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
-    window.diffAlgo.calc_image(image1, image2, out, diffThreshold, heatmapMax);
+function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
+    for (let p = 0; p < image1.length; p += 4) {
+
+        const r1 = image1[p];
+        const g1 = image1[p + 1];
+        const b1 = image1[p + 2];
+
+        const r2 = image2[p];
+        const g2 = image2[p + 1];
+        const b2 = image2[p + 2];
+
+        // luminance
+        const y1 = luminance(r1, g1, b1);
+        const y2 = luminance(r2, g2, b2);
+
+        const diff = Math.abs(y1 - y2);
+
+        if (diff < diffThreshold) {
+            // unchanged → grayscale background
+            out[p] = y1;
+            out[p + 1] = y1;
+            out[p + 2] = y1;
+            out[p + 3] = 255;
+        } else {
+
+            // heatmap: yellow → red
+            const t = Math.min(diff / heatmapMax, 1);
+
+            out[p] = 255;
+            out[p + 1] = 255 * (1 - t);
+            out[p + 2] = 0;
+            out[p + 3] = 255;
+        }
+    }
 }
+
+const luminance = (r,g,b) => (77*r + 150*g + 29*b) >> 8;
+
 
 let settings = { ...defaultSettings };
 
