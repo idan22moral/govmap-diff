@@ -2,23 +2,31 @@ class LRUCache {
     constructor(size) {
         this.size = size;
         this.map = new Map();
-        this.queue = [];
     }
 
     get(key) {
-        return this.map.get(key);
+        if (!this.map.has(key)) return undefined;
+
+        const value = this.map.get(key);
+        this.map.delete(key);
+        this.map.set(key, value); // move to most recent
+        return value;
     }
 
     set(key, value) {
-        this._makeRoom();
+        if (this.map.has(key)) {
+            this.map.delete(key);
+        }
+
         this.map.set(key, value);
-        this.queue.push(key);
+
+        this._cleanup();
     }
 
-    _makeRoom() {
-        if (this.queue.length === this.size) {
-            const keyToDelete = this.queue.shift();
-            this.map.delete(keyToDelete);
+    _cleanup() {
+        if (this.map.size > this.size) {
+            const oldestKey = this.map.keys().next().value;
+            this.map.delete(oldestKey);
         }
     }
 }
