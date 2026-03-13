@@ -23,7 +23,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "GovMap Diff Renderer"
+    "default_title": "GovMap Diff Viewer"
   },
   "content_scripts": [
     {
