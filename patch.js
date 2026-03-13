@@ -35,7 +35,7 @@ const defaultSettings = {
     heatmapMax: 80
 };
 
-function calcImage(image1, image2, out, diffThreshold, heatmapMax) {
+function calcDiffImageData(image1, image2, out, diffThreshold, heatmapMax) {
     const invHeat = 1 / heatmapMax;
     for (let p = 0; p < image1.length; p += 4) {
 
@@ -100,7 +100,7 @@ window.diffCtx.drawImage = window.originalDrawImageImpl.bind(window.diffCtx);
 
 const imageDataCache = new LRUCache(1000);
 
-function calcDiffImage(originalImage, compareImage, settings) {
+function generateDiffImage(originalImage, compareImage, settings) {
     const { diffCanvas: canvas, diffCtx: ctx } = window;
     const { width: imageWidth, height: imageHeight } = originalImage;
 
@@ -120,7 +120,7 @@ function calcDiffImage(originalImage, compareImage, settings) {
     const compareImageData = ctx.getImageData(0, 0, imageWidth, imageHeight);
 
     const diffImageData = ctx.createImageData(imageWidth, imageHeight);
-    calcImage(currentImageData.data, compareImageData.data, diffImageData.data, settings.threshold, settings.heatmapMax);
+    calcDiffImageData(currentImageData.data, compareImageData.data, diffImageData.data, settings.threshold, settings.heatmapMax);
 
     return diffImageData;
 };
@@ -161,7 +161,7 @@ function patchedDrawImage(originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth
     const compareImage = new Image();
     compareImage.crossOrigin = 'anonymous';
     compareImage.onload = () => {
-        const diffImageData = calcDiffImage(originalImage, compareImage, settings);
+        const diffImageData = generateDiffImage(originalImage, compareImage, settings);
         imageDataCache.set(compareImageSrc, diffImageData);
 
         ctx.putImageData(diffImageData, 0, 0);
