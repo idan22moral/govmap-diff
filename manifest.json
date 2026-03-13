@@ -34,7 +34,7 @@
     },
     {
       "matches": ["https://www.govmap.gov.il/*"],
-      "js": ["injectSettings.js", "injectWasm.js"],
+      "js": ["injectSettings.js"],
       "run_at": "document_start"
     }
   ]

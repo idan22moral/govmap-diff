@@ -25,23 +25,6 @@ class LRUCache {
     }
 }
 
-let wasmUrl;
-
-window.addEventListener("message", async (e) => {
-    if (e.source !== window) return;
-    if (e.data?.type !== "EXT_WASM_URL") return;
-
-    wasmUrl = e.data.url;
-    console.log('wasmUrl', wasmUrl)
-
-
-    //   const { instance } = await WebAssembly.instantiateStreaming(fetch(wasmUrl));
-    window.diffAlgo = await import(wasmUrl);
-    await window.diffAlgo.default();
-
-    console.log("WASM loaded", window.diffAlgo);
-});
-
 const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
 
 const defaultSettings = {
