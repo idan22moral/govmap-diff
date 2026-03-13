@@ -63,14 +63,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     updateUi(settings);
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (!tabs || !tabs[0]) return;
-      chrome.tabs.sendMessage(tabs[0].id, {
-        type: 'olDiffSettings',
-        settings
-      });
-    });
-
     refreshActiveTab();
   });
 });
