@@ -78,30 +78,53 @@ window.diffCanvas = document.createElement("canvas");
 window.diffCtx = window.diffCanvas.getContext("2d", { willReadFrequently: true });
 window.diffCtx.drawImage = window.originalDrawImageImpl.bind(window.diffCtx);
 
-const imageDataCache = new LRUCache(600);
+const imageDataCache = new LRUCache(1000);
 
-CanvasRenderingContext2D.prototype.drawImage = function (originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
+function calcDiffImage(originalImage, compareImage, settings) {
+    const { diffCanvas: canvas, diffCtx: ctx } = window;
+    const { width: imageWidth, height: imageHeight } = originalImage;
+
+    if (canvas.width !== imageWidth || canvas.height !== imageHeight) {
+        canvas.width = imageWidth;
+        canvas.height = imageHeight;
+    }
+
+    // draw first image
+    ctx.clearRect(0, 0, imageWidth, imageHeight);
+    ctx.drawImage(originalImage, 0, 0);
+    const currentImageData = ctx.getImageData(0, 0, imageWidth, imageHeight);
+
+    // draw second image
+    ctx.clearRect(0, 0, imageWidth, imageHeight);
+    ctx.drawImage(compareImage, 0, 0);
+    const compareImageData = ctx.getImageData(0, 0, imageWidth, imageHeight);
+
+    const diffImageData = ctx.createImageData(imageWidth, imageHeight);
+    calcImage(currentImageData.data, compareImageData.data, diffImageData.data, settings.threshold, settings.heatmapMax);
+
+    return diffImageData;
+};
+
+function patchedDrawImage(originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
     const currentImageSrc = originalImage.src;
     if (!settings.enabled || !originalImage || !currentImageSrc) {
-        return originalDrawImage.call(this, originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        originalDrawImage.call(this, originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        return;
     }
 
     const boundDrawImage = window.originalDrawImageImpl.bind(this);
 
     const compareImageSrc = currentImageSrc.replace(settings.current, settings.compare);
-
     if (currentImageSrc === compareImageSrc) {
         boundDrawImage(originalImage, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
         return;
     }
 
-    const imageWidth = originalImage.width;
-    const imageHeight = originalImage.height;
+    const { width: imageWidth, height: imageHeight } = originalImage;
     const ctx = window.diffCtx;
     const canvas = window.diffCanvas;
 
     const cachedImageData = imageDataCache.get(compareImageSrc);
-
     if (cachedImageData) {
         ctx.putImageData(cachedImageData, 0, 0);
         boundDrawImage(
@@ -116,31 +139,12 @@ CanvasRenderingContext2D.prototype.drawImage = function (originalImage, sx, sy, 
     }
 
     const compareImage = new Image();
-    compareImage.crossOrigin = "anonymous";
-
+    compareImage.crossOrigin = 'anonymous';
     compareImage.onload = () => {
-        if (canvas.width !== imageWidth || canvas.height !== imageHeight) {
-            canvas.width = imageWidth;
-            canvas.height = imageHeight;
-        }
+        const diffImageData = calcDiffImage(originalImage, compareImage, settings);
+        imageDataCache.set(compareImageSrc, diffImageData);
 
-        // draw first image
-        ctx.clearRect(0, 0, imageWidth, imageHeight);
-        ctx.drawImage(originalImage, 0, 0);
-        const d1 = ctx.getImageData(0, 0, imageWidth, imageHeight);
-
-        // draw second image
-        ctx.clearRect(0, 0, imageWidth, imageHeight);
-        ctx.drawImage(compareImage, 0, 0);
-        const d2 = ctx.getImageData(0, 0, imageWidth, imageHeight);
-
-        const out = ctx.createImageData(imageWidth, imageHeight);
-
-        calcImage(d1.data, d2.data, out.data, settings.threshold, settings.heatmapMax);
-
-        ctx.putImageData(out, 0, 0);
-        imageDataCache.set(compareImageSrc, out);
-
+        ctx.putImageData(diffImageData, 0, 0);
         boundDrawImage(
             canvas,
             sx, sx,
@@ -150,6 +154,7 @@ CanvasRenderingContext2D.prototype.drawImage = function (originalImage, sx, sy, 
             dWidth, dHeight
         );
     };
-
     compareImage.src = compareImageSrc;
 };
+
+CanvasRenderingContext2D.prototype.drawImage = patchedDrawImage;
