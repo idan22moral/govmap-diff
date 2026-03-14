@@ -5,7 +5,6 @@
   "description": "Patches govmap to render a diff between two satellite image sources.",
   "permissions": [
     "storage",
-    "scripting",
     "activeTab"
   ],
   "host_permissions": [
